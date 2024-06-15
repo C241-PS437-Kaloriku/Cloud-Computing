@@ -36,19 +36,19 @@ const sendResetPasswordEmail = async (email, token) => {
 };
 
 // Fungsi untuk mengirim email dengan token registrasi akun
-// const sendRegisUsersEmail = async (email, token) => {
-//   const mailOptions = {
-//     from: process.env.EMAIL_USER,  
-//     to: email,
-//     subject: 'Registrasi Akun',
-//     text: `Token verifikasi untuk akun anda adalah: ${token}`
-//   };
+const sendRegisUsersEmail = async (email, token) => {
+  const mailOptions = {
+    from: process.env.EMAIL_USER,  
+    to: email,
+    subject: 'Registrasi Akun',
+    text: `Token verifikasi untuk akun anda adalah: ${token}`
+  };
 
-//   await transporter.sendMail(mailOptions);
-// };
+  await transporter.sendMail(mailOptions);
+};
 
 module.exports = {
   generateRandomToken,
   sendResetPasswordEmail,
-  // sendRegisUsersEmail
+  sendRegisUsersEmail
 };
