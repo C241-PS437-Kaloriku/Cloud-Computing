@@ -50,6 +50,39 @@ const saveRecommendedFoods = async (req, res) => {
   }
 };
 
+const getRecommendedFoods = async (req, res) => {
+  const { userId, date } = req.query;
+
+  // Validate input
+  if (!userId || !date) {
+    return res.status(400).send({ message: 'Harap kirim userId dan tanggal.' });
+  }
+
+  try {
+    const meals = ['breakfast', 'lunch', 'dinner'];
+    const recommendedFoods = {};
+
+    // Iterate through each meal type
+    for (const mealType of meals) {
+      const mealSnapshot = await db.collection('users')
+                                   .doc(userId)
+                                   .collection('history')
+                                   .doc(date)
+                                   .collection(mealType)
+                                   .get();
+
+      // Extract food items for the current meal type
+      recommendedFoods[mealType] = mealSnapshot.docs.map(doc => doc.data());
+    }
+
+    res.status(200).send({ message: 'Makanan berhasil diambil.', recommendedFoods });
+  } catch (error) {
+    console.error('Error retrieving recommended foods:', error);
+    res.status(500).send({ message: 'Terjadi masalah saat mengambil makanan.', error: error.message });
+  }
+};
+
 module.exports = {
-  saveRecommendedFoods
+  saveRecommendedFoods,
+  getRecommendedFoods
 };
