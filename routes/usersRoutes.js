@@ -9,6 +9,9 @@ const { upload } = require('../users/uploadPPicture');
 // Register
 router.post('/register', usersController.register);
 
+// Request token untuk register
+router.post('/token-register', usersController.tokenRegister);
+
 // Login
 router.post('/login', usersController.login);
 
