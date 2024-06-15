@@ -36,7 +36,7 @@ router.post('/reset-password', usersController.resetPassword);
 // Save Recommended Foods
 router.post('/save-recommended-foods', checkSession, recommendedFoodsController.saveRecommendedFoods);
 
-
-
+// Get Recommended Foods
+router.get('/get-recommended-foods', checkSession, recommendedFoodsController.getRecommendedFoods);
 
 module.exports = router;
