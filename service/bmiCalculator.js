@@ -34,11 +34,11 @@ const calculatorbmi = async (req, res) => {
 
         let category;
         if (bmi < 18.5) {
-            category = 'Berat badan kurang (Underweight)';
+            category = 'Underweight';
         } else if (bmi >= 18.5 && bmi < 25) {
-            category = 'Berat badan normal';
+            category = 'Normal';
         } else if (bmi >= 25 && bmi < 30) {
-            category = 'Berat badan berlebih (Overweight)';
+            category = 'Overweight';
         } else {
             category = 'Obesitas';
         }
