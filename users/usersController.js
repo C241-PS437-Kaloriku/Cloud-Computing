@@ -2,7 +2,6 @@ const db = require('../server/dbFirebase');
 const { v4: uuidv4 } = require('uuid');
 const bcrypt = require('bcrypt');
 const { generateToken } = require('./authMiddleware');
-const { generateRandomToken, sendResetPasswordEmail, sendRegisUsersEmail } = require('./usersResetPass');
 const bucket  = require('../server/storage');
 
 const moment = require('moment');
@@ -12,14 +11,14 @@ const generateUserId = () => {
 };
 
 const register = async (req, res) => {
-  const { email, token, password, birthdate } = req.body;
+  const { email, password, birthdate } = req.body;
 
   const emailRegex = /\S+@\S+\.\S+/;
   if (!email || !emailRegex.test(email)) {
     return res.status(400).send({ message: 'Tolong masukkan email yang valid.' });
   }
 
-  if (!token || !password || !birthdate) {
+  if (!password || !birthdate) {
     return res.status(400).send({ message: 'Tolong masukan data dengan lengkap.' });
   }
 
@@ -39,16 +38,6 @@ const register = async (req, res) => {
       return res.status(400).send({ message: 'Email yang anda daftarkan sudah digunakan, coba gunakan email lain.' });
     }
 
-    const tokenData = await db.collection('RegisterTokens').doc(email).get();
-    const savedToken = tokenData.data().token;
-
-    if (token !== savedToken) {
-      return res.status(400).send({ message: 'Token verifikasi tidak valid.' });
-    }
-
-    // Menghapus token setelah digunakan
-    await db.collection('RegisterTokens').doc(email).delete();
-
     const userId = generateUserId();
     const hashedPassword = await bcrypt.hash(password, 10);
     const createdAt = moment().toISOString(); 
@@ -67,29 +56,6 @@ const register = async (req, res) => {
   } catch (error) {
     // console.error('Error registering user:', error); // Log the error
     res.status(500).send({ message: 'Akun gagal didaftarkan.', error: error.message });
-  }
-};
-
-const tokenRegister = async (req, res) => {
-  const { email } = req.body;
-
-  if (!email) {
-    return res.status(400).send({ message: 'Tolong masukkan email Anda.' });
-  }
-
-  try {
-    const token = generateRandomToken();
-
-    // Kirim token via email
-    await sendRegisUsersEmail(email, token);
-
-    // Simpan token di database atau temporary storage
-    await db.collection('RegisterTokens').doc(email).set({ token });
-
-    res.status(200).send({ message: 'Token register telah dikirim ke email Anda.' });
-  } catch (error) {
-    console.error('Terjadi kesalahan saat mengirimkan token register:', error);
-    res.status(500).send({ message: 'Terjadi kesalahan saat mengirimkan token register.' });
   }
 };
 
@@ -254,80 +220,6 @@ const editProfile = async (req, res) => {
   }
 };
 
-const resetPasswordRequest = async (req, res) => {
-  const { email } = req.body;
-
-  if (!email) {
-    return res.status(400).send({ message: 'Tolong masukkan email Anda.' });
-  }
-
-  try {
-    const userQuery = db.collection('users').where('email', '==', email);
-    const userSnapshot = await userQuery.get();
-
-    if (userSnapshot.empty) {
-      return res.status(404).send({ message: 'Email tidak ditemukan dalam sistem kami.' });
-    }
-
-    const userId = userSnapshot.docs[0].data().userId;
-    const token = generateRandomToken();
-
-    // Kirim token via email
-    await sendResetPasswordEmail(email, token);
-
-    // Simpan token di database atau temporary storage
-    await db.collection('passwordResetTokens').doc(userId).set({ token });
-
-    res.status(200).send({ message: 'Token reset password telah dikirim ke email Anda.' });
-  } catch (error) {
-    console.error('Error resetting password:', error);
-    res.status(500).send({ message: 'Terjadi masalah saat mereset password.' });
-  }
-};
-
-const resetPassword = async (req, res) => {
-  const { email, token, newPassword } = req.body;
-
-  if (!email || !token || !newPassword) {
-    return res.status(400).send({ message: 'Tolong masukkan email, token, dan password baru.' });
-  }
-
-  try {
-    // Mengambil data email dari user
-    const userQuery = db.collection('users').where('email', '==', email);
-    const userSnapshot = await userQuery.get();
-
-    if (userSnapshot.empty) {
-      return res.status(404).send({ message: 'Email tidak ditemukan dalam sistem kami.' });
-    }
-
-    const userId = userSnapshot.docs[0].data().userId;
-
-    const tokenData = await db.collection('passwordResetTokens').doc(userId).get();
-    const savedToken = tokenData.data().token;
-
-    if (token !== savedToken) {
-      return res.status(400).send({ message: 'Token reset password tidak valid.' });
-    }
-
-    // Menghapus token setelah digunakan
-    await db.collection('passwordResetTokens').doc(userId).delete();
-
-    // Reset password
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    await db.collection('users').doc(userId).update({ password: hashedPassword });
-
-    // Menyimpan waktu reset password terakhir
-    const lastResetPassword = moment().toISOString();
-    await db.collection('users').doc(userId).update({ lastResetPassword });
-
-    res.status(200).send({ message: 'Password berhasil direset.' });
-  } catch (error) {
-    console.error('Error resetting password:', error);
-    res.status(500).send({ message: 'Terjadi masalah saat mereset password.' });
-  }
-};
-
 const logout = async (req, res) => {
   const { userId } = req.body;
 
@@ -399,14 +291,11 @@ const getProfile = async (req, res) => {
 
 module.exports = {
   register,
-  tokenRegister,
   login,
   logout,
   generateToken,
   editProfile,
   uploadPicture,
-  resetPassword,
-  resetPasswordRequest,
   getProfile,
 };
 
