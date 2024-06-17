@@ -3,4 +3,3 @@ package-lock.json
 /node_modules
 /server/kaloriku-serviceaccount.json
 KaloriKU.postman_collection.json
-Dockerfile
