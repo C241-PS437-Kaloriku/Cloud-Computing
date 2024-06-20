@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const usersController = require('../users/usersController');
-const recommendedFoodsController = require('../users/recommendedFoodsController');
+const recommendedFoodsController = require('../service/recommendedFoodsController');
 const service = require('../service/bmiCalculator');
 const { checkSession } = require('../users/authMiddleware');
 const { upload } = require('../users/uploadPPicture');
