@@ -166,10 +166,16 @@ const uploadPicture = async (req, res) => {
 };
 
 const editProfile = async (req, res) => {
-  const { userId, weight, height, gender, birthdate, username } = req.body;
+  const { userId, weight, height, gender, birthdate, username, goal } = req.body;
 
-  if (!userId || (!weight && !height && !gender && !birthdate && !username)) {
-    return res.status(400).send({ message: 'Tolong masukan userId dan setidaknya satu data untuk diperbarui (berat, tinggi, jenis kelamin, tanggal lahir, atau username).' });
+  if (!userId || (!weight && !height && !gender && !birthdate && !username && !goal)) {
+    return res.status(400).send({ message: 'Tolong masukan userId dan setidaknya satu data untuk diperbarui (berat, tinggi, jenis kelamin, tanggal lahir, username, atau tujuan).' });
+  }
+
+  // Validasi nilai goal
+  const validGoals = ['maintain', 'increase', 'decrease'];
+  if (goal && !validGoals.includes(goal)) {
+    return res.status(400).send({ message: 'Nilai goal tidak valid. Pilih salah satu dari: maintain, increase, atau decrease.' });
   }
 
   try {
@@ -207,6 +213,8 @@ const editProfile = async (req, res) => {
 
       updates.username = username;
     }
+
+    if (goal) updates.goal = goal;
 
     await db.runTransaction(async (t) => {
       snapshot.forEach(doc => {
@@ -251,7 +259,6 @@ const logout = async (req, res) => {
 
 const getProfile = async (req, res) => {
   const { userId } = req.query;  
-  console.log('Received userId:', userId); 
 
   if (!userId) {
     return res.status(400).send({ message: 'Tolong masukkan userId.' });
@@ -260,7 +267,6 @@ const getProfile = async (req, res) => {
   try {
     const userRef = db.collection('users').doc(userId);
     const userDoc = await userRef.get();
-    // console.log('User document exists:', userDoc.exists); // Log user document existence
 
     if (!userDoc.exists) {
       return res.status(404).send({ message: 'User ID tidak ditemukan dalam sistem kami.' });
@@ -278,12 +284,12 @@ const getProfile = async (req, res) => {
         age: userData.age,
         gender: userData.gender,
         weight: userData.weight,
-        height: userData.height
+        height: userData.height,
+        goal: userData.goal
       }
     });
 
   } catch (error) {
-    // console.error('Error getting profile:', error); // Log the error
     res.status(500).send({ message: 'Terjadi masalah saat mendapatkan profil.', error });
   }
 };
