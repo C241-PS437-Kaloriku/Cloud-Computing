@@ -7,7 +7,7 @@
 
 ## If you want to deploy it to Cloud Run
 ```
-$ gcloud run deploy --source . --port 5000
+gcloud run deploy --source . --port 5000
 ```
 ### Don't forget to input the service account into the server directory with the rules
 1. Firebase Rules System
